@@ -1,0 +1,12 @@
+{
+  "components": [
+    {
+      "name": "HeroSlider",
+      "src": "./src/components/HeroSlider/index.tsx"
+    },
+    {
+      "name": "HeroSliderItem",
+      "src": "./src/components/HeroSliderItem/index.tsx"
+    }
+  ]
+}

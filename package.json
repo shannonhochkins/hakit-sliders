@@ -1,0 +1,29 @@
+{
+  "name": "@hakit/sliders",
+  "version": "0.0.0",
+  "description": "A collection of slider related components",
+  "type": "module",
+  "scripts": {
+    "dev": "npx --package=@hakit/addon hakit-dev",
+    "type-check": "tsc --noEmit",
+    "build": "npm run type-check && npx --package=@hakit/addon hakit-bundle",
+    "create-component": "npx --package=@hakit/addon hakit-create-component"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@hakit/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/react": "^19.2.7",
+    "@emotion/styled": "^11.14.1",
+    "@emotion/react": "^11.14.0"
+  },
+  "peerDependencies": {
+    "@hakit/addon": "^0.0.29"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
