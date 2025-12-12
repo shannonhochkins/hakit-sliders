@@ -1,9 +1,6 @@
-import { ComponentConfig, generateId, RenderProps, Slot, UnitFieldValue } from "@hakit/addon";
-import { Carousel } from "./Carousel";
-import { GridWidth, GridHeight } from "./GridTile";
+import { ComponentConfig, RenderProps, Slot, UnitFieldValue } from "@hakit/addon";
+import { Carousel, GridWidth, GridHeight } from "./Carousel";
 import { SlideEffects } from "./Carousel";
-import { PrimaryButton } from "@hakit/addon/components";
-import { HeroSliderItemProps } from "../HeroSliderItem";
 
 interface Item {
   width: GridWidth;
@@ -19,7 +16,8 @@ interface Slide {
 interface HeroSliderProps {
   slides: Slide[];
   options: {
-    defaultSlideIndex?: number;
+    defaultSlide?: number;
+    maintainSlidePosition?: boolean;
     height?: UnitFieldValue;
     slideGap?: UnitFieldValue;
     easing?:
@@ -65,7 +63,8 @@ export function Render(props: RenderProps<HeroSliderProps>) {
       ref={props._dragRef}
       cssStyles={props.css}
       slides={props.slides}
-      defaultSlideIndex={props.options.defaultSlideIndex}
+      defaultSlide={props.options.defaultSlide}
+      maintainSlidePosition={props.options.maintainSlidePosition}
       height={props.options.height}
       slideGap={props.options.slideGap}
       easing={props.options.easing}
@@ -86,8 +85,8 @@ export const config: ComponentConfig<HeroSliderProps> = {
   fields: {
     slides: {
       type: "array",
-      label: "Slides",
-      description: "The slides to display in the slider",
+      label: "Slides & Items",
+      description: "The slides to display in the slider and the items within each slide",
       getItemSummary(item, index = 0) {
         return `Slide ${index + 1}`;
       },
@@ -103,7 +102,7 @@ export const config: ComponentConfig<HeroSliderProps> = {
           label: "Items",
           description: "Grid items within this slide",
           getItemSummary(item, index = 0) {
-            return `Slide Item ${index + 1}`;
+            return `Slide Item ${item.width}x${item.height}`;
           },
           default: [
             {
@@ -112,10 +111,6 @@ export const config: ComponentConfig<HeroSliderProps> = {
               content: [],
             },
           ],
-          defaultItemProps: {
-            width: 4,
-            height: 4,
-          },
           arrayFields: {
             width: {
               type: "slider",
@@ -158,11 +153,18 @@ export const config: ComponentConfig<HeroSliderProps> = {
       label: "Options",
       description: "Options for the slider",
       objectFields: {
-        defaultSlideIndex: {
-          type: "number",
+        defaultSlide: {
+          type: "select",
           label: "Default Slide Index",
-          description: "The index of the slide to show initially (0-based)",
+          description: "The slide to show initially",
           default: 0,
+          options: []
+        },
+        maintainSlidePosition: {
+          type: "switch",
+          label: "Maintain Slide Position",
+          description: "Remember the last viewed slide position across page refreshes",
+          default: false,
         },
         height: {
           type: "unit",
@@ -218,6 +220,9 @@ export const config: ComponentConfig<HeroSliderProps> = {
           label: "Transition Duration (ms)",
           description: "Duration of slide transitions in milliseconds",
           default: 600,
+          min: 0,
+          max: 10000,
+          step: 50,
         },
         inactiveLeft: {
           type: "object",
@@ -229,26 +234,38 @@ export const config: ComponentConfig<HeroSliderProps> = {
               type: "number",
               label: "Scale",
               description: "Scale factor for inactive left slides (0-1)",
-              default: 0.9,
+              default: 1,
+              min: 0,
+              max: 1,
+              step: 0.01,
             },
             translate: {
               type: "number",
               label: "Translate (%)",
               description:
                 "Horizontal translation percentage for inactive left slides",
-              default: -25,
+              default: 0,
+              min: -100,
+              max: 100,
+              step: 1,
             },
             opacity: {
               type: "number",
               label: "Opacity",
               description: "Opacity for inactive left slides (0-1)",
-              default: 0.9,
+              default: 1,
+              min: 0,
+              max: 1,
+              step: 0.01,
             },
             blur: {
               type: "number",
               label: "Blur (px)",
               description: "Blur amount in pixels for inactive left slides",
-              default: 2,
+              default: 0,
+              min: 0,
+              max: 10,
+              step: 1,
             },
           },
         },
@@ -263,6 +280,9 @@ export const config: ComponentConfig<HeroSliderProps> = {
               label: "Scale",
               description: "Scale factor for inactive right slides (0-1)",
               default: 1,
+              min: 0,
+              max: 1,
+              step: 0.01,
             },
             translate: {
               type: "number",
@@ -270,18 +290,27 @@ export const config: ComponentConfig<HeroSliderProps> = {
               description:
                 "Horizontal translation percentage for inactive right slides",
               default: 0,
+              min: -100,
+              max: 100,
+              step: 1,
             },
             opacity: {
               type: "number",
               label: "Opacity",
               description: "Opacity for inactive right slides (0-1)",
               default: 1,
+              min: 0,
+              max: 1,
+              step: 0.01,
             },
             blur: {
               type: "number",
               label: "Blur (px)",
               description: "Blur amount in pixels for inactive right slides",
               default: 0,
+              min: 0,
+              max: 10,
+              step: 1,
             },
           },
         },
@@ -299,6 +328,26 @@ export const config: ComponentConfig<HeroSliderProps> = {
         },
       },
     },
+  },
+  resolveFields(data, { fields }) {
+    const slides = data.props.slides;
+    const slideOptions = slides.map((slide, index) => ({
+      value: index,
+      label: `Slide ${index + 1}`,
+    }));
+    if (fields.options.type === 'object' && fields.options.objectFields.defaultSlide?.type === 'select') {
+      if (slideOptions.length > 0) {
+        fields.options.objectFields.defaultSlide.options = slideOptions;
+        fields.options.objectFields.defaultSlide.readOnly = false;
+        fields.options.objectFields.defaultSlide.description = "The slide to show initially";
+        fields.options.objectFields.defaultSlide.renderValue = undefined;
+      } else {
+        fields.options.objectFields.defaultSlide.description = "Add slides to the slider to select a default slide";
+        fields.options.objectFields.defaultSlide.readOnly = true;
+        fields.options.objectFields.defaultSlide.renderValue = () => <>No slides found</>;
+      }
+    }
+    return fields;
   },
   render: Render,
 };

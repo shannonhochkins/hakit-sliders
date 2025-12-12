@@ -28,10 +28,14 @@ const Slide = styled.div<SlideProps>`
   align-items: center;
   position: relative;
   z-index: ${props => props.zIndex || 0};
+  /* Apply visual effects for inactive slides, will change will break liquid glass effect */
   will-change: transform, opacity, filter;
-  /* Apply visual effects for inactive slides */
   ${props => {
-  if (props.isActive) return 'transform: scale(1) translateX(0) translateZ(0);';
+  if (props.isActive) {
+    return `
+      transform: scale3d(1, 1, 1) translate3d(0, 0, 0);
+    `;
+  }
   const effects = props.inactiveEffects || {};
   // Calculate the effect intensity based on distance from active slide
   const distance = Math.abs(props.distanceFromActive || 0);
@@ -40,8 +44,11 @@ const Slide = styled.div<SlideProps>`
   const isNearest = distance === 1;
   // Apply the configured translate exactly (no damping/scaling) to the nearest neighbor only
   let translateValue = isNearest ? translateBase : 0;
+  // Don't use translateZ(0) on inactive slides as it creates a new stacking context
+  // that can break SVG filter rendering. Also avoid backface-visibility on inactive slides.
+  const scale = effects.scale !== undefined ? Math.pow(effects.scale, distance) : 1;
   return `
-      transform: scale(${effects.scale !== undefined ? Math.pow(effects.scale, distance) : 1}) translateX(${translateValue}%) translateZ(0);
+      transform: scale3d(${scale}, ${scale}, 1) translate3d(${translateValue}%, 0, 0);
       opacity: ${effects.opacity !== undefined ? Math.pow(effects.opacity, distance) : 1};
       filter: blur(${effects.blur !== undefined ? effects.blur * distance : 0}px);
     `;
@@ -135,7 +142,22 @@ export const CarouselSlide = forwardRef<HTMLDivElement, CarouselSlideProps>(func
   }, [isTransitioning, transitionFrom, transitionTo, transitionDirection, index, activeIndex]);
   // Select the appropriate effects based on which side of the active slide this is
   const inactiveEffects = isLeftSide ? inactiveLeft : inactiveRight;
-  return <Slide ref={ref} slideWidth={slideWidth} isActive={isActive} distanceFromActive={distanceFromActive} inactiveEffects={inactiveEffects} isLeftSide={isLeftSide} zIndex={zIndex} easingFn={easingFn} isTransitioning={isTransitioning} transitionDirection={transitionDirection} transitionFrom={transitionFrom} transitionTo={transitionTo}>
-        {children}
-      </Slide>;
+  return (
+    <Slide 
+      ref={ref} 
+      slideWidth={slideWidth} 
+      isActive={isActive} 
+      distanceFromActive={distanceFromActive} 
+      inactiveEffects={inactiveEffects} 
+      isLeftSide={isLeftSide} 
+      zIndex={zIndex} 
+      easingFn={easingFn} 
+      isTransitioning={isTransitioning} 
+      transitionDirection={transitionDirection} 
+      transitionFrom={transitionFrom} 
+      transitionTo={transitionTo}
+    >
+      {children}
+    </Slide>
+  );
 });

@@ -9,11 +9,7 @@
     "build": "npm run type-check && npx --package=@hakit/addon hakit-bundle",
     "create-component": "npx --package=@hakit/addon hakit-create-component"
   },
-  "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "@hakit/core": "^6.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.9.3",
     "@types/react": "^19.2.7",
@@ -21,7 +17,10 @@
     "@emotion/react": "^11.14.0"
   },
   "peerDependencies": {
-    "@hakit/addon": "^0.0.29"
+    "@hakit/core": "^6.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@hakit/addon": "^0.0.33"
   },
   "engines": {
     "node": ">=20.0.0"
